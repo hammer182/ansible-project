@@ -99,10 +99,9 @@
       become: yes
 
     - name: 'Set-up Apache to run Wordpress'
-      copy:
-        src: '/configs/000-default.conf'
-        dest: '/etc/apache2/sites-available/000-default.conf'
-        remote_src: yes
+      template:
+        src: '/configs/playbooks/templates/000-default.conf.j2'
+        dest: '/etc/apache2/sites-available/000-default.conf' 
       become: yes
       notify: 
         - restart apache
