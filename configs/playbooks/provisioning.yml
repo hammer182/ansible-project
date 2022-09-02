@@ -1,27 +1,16 @@
 ---
 - name: Wordpress configuration
-  hosts: wordpress
+
+  hosts: mysql
 
   handlers:
-    - name: restart apache
+    - name: restart mysql
       service:
-        name: apache2
+        name: mysql
         state: restarted
       become: yes
 
   tasks:
-    - name: 'Install PHP and dependencies'
-      apt:
-        name: 
-        - php7.2
-        - apache2
-        - libapache2-mod-php7.2
-        - php7.2-gd
-        - php-ssh2
-        - php7.2-mysql
-        state: latest
-      become: yes
-
     - name: 'Install MySQL and dependencies'
       apt:
         name: 
@@ -44,8 +33,43 @@
         name: wordpress
         password: 12345
         priv: 'wordpress_db.*:ALL'
-        host: '%'
+        host: '{{ item }}'
         state: present
+      with_items:
+        - localhost
+        - '127.0.0.1'
+        - '192.168.182.12'
+      become: yes
+
+    - name: 'Set-up MySQL to allow remote connection'
+      copy:
+        src: '/configs/mysqld.cnf'
+        dest: '/etc/mysql/mysql.conf.d/mysqld.cnf'
+        remote_src: yes
+      become: yes
+      notify:
+        - restart mysql
+
+- hosts: wordpress
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+      become: yes
+
+  tasks:
+    - name: 'Install PHP and dependencies'
+      apt:
+        name: 
+        - php7.2
+        - apache2
+        - libapache2-mod-php7.2
+        - php7.2-gd
+        - php-ssh2
+        - php7.2-mysql
+        state: latest
       become: yes
 
     - name: 'Download and extract latest version of Wordpress'
@@ -71,6 +95,7 @@
         - { regex: 'database_name_here', value: 'wordpress_db'}
         - { regex: 'username_here', value: 'wordpress'}
         - { regex: 'password_here', value: '12345'}
+        - { regex: 'localhost', value: '192.168.182.13'}
       become: yes
 
     - name: 'Set-up Apache to run Wordpress'

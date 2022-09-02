@@ -19,10 +19,26 @@ Vagrant.configure("2") do |config|
         vb.name = "wordpress"
       end
       #Private Network manually assigned
-      wordpress.vm.network "private_network", ip: "192.168.182.11"    
+      wordpress.vm.network "private_network", ip: "192.168.182.12"    
       #Provisioning
       wordpress.vm.provision "shell", inline: "apt-get update -y && sudo apt install python -y"
       wordpress.vm.provision "shell",
+        inline: "cat /configs/wp_key.pub >> .ssh/authorized_keys"
+  end
+
+  #Wordpress
+  config.vm.define "mysql" do |mysql|
+      #Configuration
+      mysql.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus = 2
+        vb.name = "mysql"
+      end
+      #Private Network manually assigned
+      mysql.vm.network "private_network", ip: "192.168.182.13"    
+      #Provisioning
+      mysql.vm.provision "shell", inline: "apt-get update -y"
+      mysql.vm.provision "shell",
         inline: "cat /configs/wp_key.pub >> .ssh/authorized_keys"
   end
 
@@ -35,7 +51,7 @@ Vagrant.configure("2") do |config|
         vb.name = "ansible"
       end
       #Public Network manually assigned
-      ansible.vm.network "private_network", ip: "192.168.182.12" 
+      ansible.vm.network "private_network", ip: "192.168.182.11" 
       #Provisioning
       ansible.vm.provision "shell", 
         inline: "cp /configs/wp_key /home/vagrant && \ 
