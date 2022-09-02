@@ -1,0 +1,39 @@
+---
+- name: 'Install MySQL and dependencies'
+  apt:
+    name: 
+    - mysql-server-5.7
+    - python3-mysqldb
+    - php7.2-mysql
+    state: latest
+  become: yes
+
+- name: 'Create MySQL database'
+  mysql_db: 
+    name: "{{ database }}"
+    login_user: root
+    state: present
+  become: yes
+
+- name: 'Create MySQL user'
+  mysql_user:
+    login_user: root
+    name: "{{ username }}"
+    password: "{{ pass }}"
+    priv: "{{ database }}.*:ALL"
+    host: '{{ item }}'
+    state: present
+  with_items:
+    - localhost
+    - '127.0.0.1'
+    - "{{ host_ip }}"
+  become: yes
+
+- name: 'Set-up MySQL to allow remote connection'
+  copy:
+    src: '/configs/playbooks/roles/mysql/files/mysqld.cnf'
+    dest: '/etc/mysql/mysql.conf.d/mysqld.cnf'
+    remote_src: yes
+  become: yes
+  notify:
+    - restart mysql

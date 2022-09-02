@@ -1,0 +1,34 @@
+---
+- name: 'Download and extract latest version of Wordpress'
+  unarchive:
+    src: 'https://wordpress.org/latest.tar.gz'
+    dest: '/var/www'
+    remote_src: yes
+  become: yes
+
+- name: 'Copy Wordpress configuration file'
+  copy:
+    src: "{{ wp_dir }}wp-config-sample.php"
+    dest: "{{ wp_dir }}wp-config.php"
+    remote_src: yes
+  become: yes
+
+- name: 'Set-up database configuration'     
+  replace:
+    path: "{{ wp_dir }}wp-config.php"
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.value }}"
+  with_items:
+    - { regex: 'database_name_here', value: "{{ database }}"}
+    - { regex: 'username_here', value: "{{ username }}"}
+    - { regex: 'password_here', value: "{{ pass }}"}
+    - { regex: 'localhost', value: "{{ db_ip }}"}
+  become: yes
+
+- name: 'Set-up Apache to run Wordpress'
+  template:
+    src: '/configs/playbooks/roles/wordpress/templates/000-default.conf.j2'
+    dest: '/etc/apache2/sites-available/000-default.conf' 
+  become: yes
+  notify: 
+    - restart apache
